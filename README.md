@@ -1,3 +1,8 @@
-# Fichier à remplacer
+## Projet IF36: groupe "Invisible Touch" P23
 
-Ce README est à remplacer par votre proposition de dataset.
+# Membres: 
+• Noé LECOINTE 
+• Esso-Manam MANGANMANA
+• Matheo BEGIS
+• Xinyuan ZHAI
+
