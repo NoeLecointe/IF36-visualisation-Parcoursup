@@ -47,13 +47,13 @@ Dans un second temps nous allons chercher à étudier les **taux de candidatures
 - Quel est le nombre de candidature d’étudier boursier/non-boursier par formation ?
 - **tobedone**
 
-Le dataset de Parcoursup pour l'année 2022 permet également d'obtenir des données sur les taux d'acceptations, c'est-à-dire le pourcentage de candidats qui ont été acceptés dans une filière donnée. Voici les questions que l'on peut se poser en utilisant ce dataset :
+Le dataset de Parcoursup pour l'année 2022 permet également d'obtenir des données sur les **taux d'acceptations**, c'est-à-dire le pourcentage de candidats qui ont été acceptés dans une filière donnée. Voici les questions que l'on peut se poser en utilisant ce dataset :
 - Quel est le taux d'acceptation global pour toutes les filières ?
 - Quels sont les taux d'acceptation par académie ?
 - Quels sont les taux d'acceptation par type de baccalauréat en 2022 ?
 - Quel est le nombre de réponse satisfaisante pour un candidat boursier/non-boursier par formation ? Le statut de l’étudiant joue-t-il dans la réponse ?
 - **tobedone**
 
-Enfin nous pourrons étudier un établissement en particulier pour étudier certaines données. On prendra par exemple l’Université de Technologie de Troyes qu’on pourra comparer aux autres écoles du même groupe. Voici quelques exemple de questions :
+Enfin nous pourrons **étudier un établissement en particulier** pour étudier certaines données. On prendra par exemple l’Université de Technologie de Troyes qu’on pourra comparer aux autres écoles du même groupe. Voici quelques exemple de questions :
 - **tobedone**
 
