@@ -39,21 +39,21 @@ Dans un premier temps nous allons **étudier les établissements** sur lesquels 
 - Pouvons-nous observer un regroupement des formations de manière géographique ?
 - Certaines régions de France ont-elles plus de capacités à accueillir que d’autres ?
 - Parcourpsup a-t-il plus de formation professionnel ou générale ?
-- **tobedone**
+
 
 Dans un second temps nous allons chercher à étudier les **taux de candidatures des étudiants**. Nous allons par exemple pourvoir répondre aux questions suivantes :
 - Quel est le nombre de candidatures par filière en 2022 ?
 - Quel est le nombre de candidatures par académie en 2022 ?
 - Quel est le nombre de candidature d’étudier boursier/non-boursier par formation ?
-- **tobedone**
+
 
 Le dataset de Parcoursup pour l'année 2022 permet également d'obtenir des données sur les **taux d'acceptations**, c'est-à-dire le pourcentage de candidats qui ont été acceptés dans une filière donnée. Voici les questions que l'on peut se poser en utilisant ce dataset :
 - Quel est le taux d'acceptation global pour toutes les filières ?
 - Quels sont les taux d'acceptation par académie ?
 - Quels sont les taux d'acceptation par type de baccalauréat en 2022 ?
 - Quel est le nombre de réponse satisfaisante pour un candidat boursier/non-boursier par formation ? Le statut de l’étudiant joue-t-il dans la réponse ?
-- **tobedone**
+
 
 Enfin nous pourrons **étudier un établissement en particulier** pour étudier certaines données. On prendra par exemple l’Université de Technologie de Troyes qu’on pourra comparer aux autres écoles du même groupe. Voici quelques exemple de questions :
-- **tobedone**
-
+- Si l'on classe les écoles d'ingénieurs post-bac en fonction de leur attractivité pour les étudiants des CPGE, où se situerait l'UTT ?
+- Parmi les trois universités de technologie(UTT, UTC, UTBM), quel établissement attire le plus d'étudiants ayant obtenu la mention très bien au baccalauréat?
