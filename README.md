@@ -38,7 +38,7 @@ Dans un premier temps nous allons **étudier les établissements** sur lesquels 
 - Quels sont les types de formations les plus représentés ?
 - Pouvons-nous observer un regroupement des formations de manière géographique ?
 - Certaines régions de France ont-elles plus de capacités à accueillir que d’autres ?
-- Parcourpsup a-t-il plus de formation professionnel ou générale ?
+- Parcourpsup a-t-il plus de formations professionnelles ou générales ?
 
 
 Dans un second temps nous allons chercher à étudier les **taux de candidatures des étudiants**. Nous allons par exemple pourvoir répondre aux questions suivantes :
@@ -56,4 +56,4 @@ Le dataset de Parcoursup pour l'année 2022 permet également d'obtenir des donn
 
 Enfin nous pourrons **étudier un établissement en particulier** pour étudier certaines données. On prendra par exemple l’Université de Technologie de Troyes qu’on pourra comparer aux autres écoles du même groupe. Voici quelques exemple de questions :
 - Si l'on classe les écoles d'ingénieurs post-bac en fonction de leur attractivité pour les étudiants des CPGE, où se situerait l'UTT ?
-- Parmi les trois universités de technologie(UTT, UTC, UTBM), quel établissement attire le plus d'étudiants ayant obtenu la mention très bien au baccalauréat?
+- Parmi les trois universités de technologie(UTT, UTC, UTBM), quel établissement attire le plus d'étudiants ayant obtenu la mention très bien au baccalauréat?(en comparant la variable "pct_TBF" des formations des trois écoles)
