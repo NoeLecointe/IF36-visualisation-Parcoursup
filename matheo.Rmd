@@ -1,0 +1,93 @@
+---
+title: "Parcoursup Analyse"
+author: "Mathéo"
+date: "2023"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+## Librairies
+
+```{r}
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+```
+## Dataset
+```{r}
+
+fr_esr_parcoursup <- read_delim("C:/UTT/IF36/projet-if36-p23-invisible-touch/data/fr-esr-parcoursup.csv", 
+                                delim = ";", escape_double = FALSE, na = "NA", 
+                                trim_ws = TRUE, show_col_types = FALSE)
+```
+
+## Établissements en général
+
+Graphique représentant le nombre de formations proposées sur parcourpsup pour l'année 2022. On remarque que les Licences et les BTS sont les formations les plus proposées.
+
+```{r}
+ggplot(data=fr_esr_parcoursup, aes(fili)) + labs(x = "Formations",
+       y = "Quantité") + geom_bar(fill="blue") + ylim(0,6000) + coord_flip() + 
+  geom_text(stat='count', aes(label=..count..), hjust = -0.2) + labs(title="Nombres de types de formations")
+
+```
+
+
+Carte de la France métropolitaine représentant chaque formation proposé ainsi que le nombre de formations associé. Comme vu précédemment les BTS sont les plus représentés en nombre: ils sont également très bien réparti sur le territoire. A l'inverse, les Licence, Ecoles d'Ingénieurs ou encore les Ecoles de Commerces sont surtout situés dans les alentours des grandes villes.
+
+```{r}
+data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
+
+data_graph <- data_graph %>% separate(g_olocalisation_des_formations, c("lat","long"), sep=",") %>% transform(long = as.numeric(long), lat = as.numeric(lat)) %>%  filter(lat > 41.6, lat < 51.5)
+
+data_graph <- data_graph %>% group_by(lat,long,fili) %>% mutate(quantite=n())
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot(data = world) +
+  geom_sf() +
+  geom_point(data = data_graph, aes(x = long, y = lat, color=fili, size=quantite)) +
+  coord_sf(xlim = c(-5, 9.5), ylim = c(41, 52), expand = FALSE, datum = NA) +
+  labs(title="Répartition des formations\n
+       en France métropolitaine", color="Formations", size="Quantités") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom", legend.box = "vertical",
+        axis.title = element_blank())
+
+```
+
+Carte représentant les départements en France métropolitaine en fonction du nombre de candidature en 2022. On peut voir que Paris attire énormément. Cependant, Le Nord-Pas-de-Calais et le Rhône restent très demandés. De plus, on remarque que la diagonale du vide est présente avec moins de demandes dans ces départements.
+
+```{r}
+data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations", "acc_tot", "voe_tot"))
+
+data_graph <- data_graph %>% separate(g_olocalisation_des_formations, c("lat","long"), sep=",") %>% transform(long = as.numeric(long), lat = as.numeric(lat)) %>%  filter(lat > 41.6, lat < 51.5)
+
+fra <- readRDS("data/carte_france.rds")
+liste_capa <- data_graph %>% count(dep_lib, wt=acc_tot) %>% rename(NAME_2 = dep_lib)
+liste_demande <- data_graph %>% count(dep_lib, wt=voe_tot) %>% rename(NAME_2 = dep_lib)
+liste_capa <- merge(liste_capa,liste_demande, "NAME_2")
+liste_capa$pourcent <- liste_capa$n.x*100/liste_capa$n.y
+liste_capa$NAME_2 <- tolower(liste_capa$NAME_2)
+fra$NAME_2 <- tolower(fra$NAME_2)
+liste_capa[liste_capa=="corse du sud"] <- "corse-du-sud"
+fra <- merge(fra, liste_capa, "NAME_2")
+#fra <- fra %>% filter(NAME_2 != "paris")
+
+ggplot(fra, aes(fill = n.y, geometry = geometry), color = "white", size = 0.2) +
+  geom_sf() +
+  coord_sf(datum = NA, expand = FALSE) +
+  ggtitle("Répartitions du nombre de candidature\ndes départements en métropole") +
+  theme(panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 16)) + 
+  scale_fill_gradient(low="white", high = "#004b05") +
+  labs(fill="Nombres de demandes d'étudiants")
+```
