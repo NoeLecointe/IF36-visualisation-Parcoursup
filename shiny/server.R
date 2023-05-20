@@ -11,7 +11,7 @@ library(shinyWidgets)
 
 dataset <- starwars
 
-fr_esr_parcoursup <- read_delim("C:/UTT/IF36/projet-if36-p23-invisible-touch/data/fr-esr-parcoursup.csv",
+fr_esr_parcoursup <- read_delim("../data/fr-esr-parcoursup.csv",
                                 delim = ";", escape_double = FALSE, na = "NA",
                                 trim_ws = TRUE, show_col_types = FALSE)
 
@@ -36,6 +36,28 @@ shinyServer(function(input, output) {
       labs(color="Formations", size="Quantités") +
       theme(legend.position = "bottom", legend.box = "vertical",
             axis.title = element_blank())
+  })
+  
+  #Graphe 2: taux d'acceptation par académie
+
+  
+  tauxParAcademie <- fr_esr_parcoursup %>%
+    group_by(acad_mies) %>%
+    summarize(tauxParAcademie = mean(prop_tot/voe_tot))
+  
+  data_tauxParAcademie <- reactive({
+  data_tauxParAcademie <- tauxParAcademie %>%
+    filter(tauxParAcademie > as.numeric(gsub("%", "", input$seuilTauxParAcademie))/100)})
+  
+  
+  output$plot2 <- renderPlot({
+    ggplot(data_tauxParAcademie(), aes(x = acad_mies, y = tauxParAcademie)) +
+      geom_bar(stat = "identity", fill="#234E70") +
+      geom_text(aes(label = paste0(round(tauxParAcademie*100,1),"%")), angle = 90, vjust = 0.5, size = 4, nudge_y = 0.03) +
+      scale_y_continuous(labels = scales::percent_format()) +
+      xlab("Académie") +
+      ylab("Taux d'acceptation") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   })
   
   

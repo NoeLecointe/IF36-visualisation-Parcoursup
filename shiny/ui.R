@@ -7,7 +7,8 @@ dashboardPage(
   dashboardHeader(title="Parcoursup"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Formations", tabName = "stats", icon = icon("table"))
+      menuItem("Formations", tabName = "stats", icon = icon("table")),
+      menuItem("Taux d'Acceptation", tabName = "academie", icon = icon("percent"))
     )
   ),
   dashboardBody(
@@ -22,8 +23,18 @@ dashboardPage(
           selected = list("BTS", "Autre formation", "CPGE", "Licence", "BUT", "Ecole de Commerce", "Ecole d'Ingénieur", "IFSI", "EFTS", "Licence_Las", "PASS")
         ),
         plotOutput("plot1", width = "90vw", height = "90vh")
-        
-      )
+      ),
+      tabItem(tabName= "academie",
+              h2("Taux d'acceptation par académie en phase principale"),
+              sliderTextInput(
+                inputId = "seuilTauxParAcademie",
+                label = "Choisissez le seuil minimal du taux d'acceptation:", 
+                choices = c("20%", "25%", "30%", "35%", "40%", "45%", "50%"),
+                grid = TRUE
+              ),
+              plotOutput("plot2", width = "90vw", height = "90vh")
+              
+              )
     )
   )
 )
