@@ -1,0 +1,404 @@
+---
+title: "Parcoursup Analyse"
+author: "Mathéo, Noé, Essomanam, Xinyuan"
+date: "2023"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE)
+```
+
+## Présentation
+
+Présenter le sujet ...
+
+```{r}
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+
+fr_esr_parcoursup <- read_delim("data/fr-esr-parcoursup.csv", 
+                                delim = ";", escape_double = FALSE, na = "NA", 
+                                trim_ws = TRUE, show_col_types = FALSE)
+
+fr_esr_parcoursup_2021 <- read_delim("data/fr-esr-parcoursup_2021.csv",
+            delim = ";", 
+            escape_double = FALSE, na = "NA", trim_ws = TRUE)
+
+fr_esr_parcoursup_2020 <- read_delim("data/fr-esr-parcoursup_2020.csv", 
+            delim = ";", 
+            escape_double = FALSE, na = "NA", trim_ws = TRUE)
+```
+
+## Établissements en général
+
+Graphique représentant le nombre de formations proposées sur parcourpsup pour l'année 2022. On remarque que les Licences et les BTS sont les formations les plus proposées.
+
+```{r}
+ggplot(data=fr_esr_parcoursup, aes(fili)) + labs(x = "Formations",
+       y = "Quantité") + geom_bar(fill="blue") + ylim(0,6000) + coord_flip() + 
+  geom_text(stat='count', aes(label=..count..), hjust = -0.2) + labs(title="Nombres de types de formations")
+
+```
+
+
+Carte de la France métropolitaine représentant chaque formation proposé ainsi que le nombre de formations associé. Comme vu précédemment les BTS sont les plus représentés en nombre: ils sont également très bien réparti sur le territoire. A l'inverse, les Licence, Ecoles d'Ingénieurs ou encore les Ecoles de Commerces sont surtout situés dans les alentours des grandes villes.
+
+```{r}
+data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
+
+data_graph <- data_graph %>% separate(g_olocalisation_des_formations, c("lat","long"), sep=",") %>% transform(long = as.numeric(long), lat = as.numeric(lat)) %>%  filter(lat > 41.6, lat < 51.5)
+
+data_graph <- data_graph %>% group_by(lat,long,fili) %>% mutate(quantite=n())
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot(data = world) +
+  geom_sf() +
+  geom_point(data = data_graph, aes(x = long, y = lat, color=fili, size=quantite)) +
+  coord_sf(xlim = c(-5, 9.5), ylim = c(41, 52), expand = FALSE, datum = NA) +
+  labs(title="Répartition des formations\n
+       en France métropolitaine", color="Formations", size="Quantités") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom", legend.box = "vertical",
+        axis.title = element_blank())
+
+```
+
+Carte représentant les départements en France métropolitaine en fonction du nombre de candidature en 2022. On peut voir que Paris attire énormément. Cependant, Le Nord-Pas-de-Calais et le Rhône restent très demandés. De plus, on remarque que la diagonale du vide est présente avec moins de demandes dans ces départements.
+
+```{r}
+data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations", "acc_tot", "voe_tot"))
+
+data_graph <- data_graph %>% separate(g_olocalisation_des_formations, c("lat","long"), sep=",") %>% transform(long = as.numeric(long), lat = as.numeric(lat)) %>%  filter(lat > 41.6, lat < 51.5)
+
+fra <- readRDS("data/carte_france.rds")
+liste_capa <- data_graph %>% count(dep_lib, wt=acc_tot) %>% rename(NAME_2 = dep_lib)
+liste_demande <- data_graph %>% count(dep_lib, wt=voe_tot) %>% rename(NAME_2 = dep_lib)
+liste_capa <- merge(liste_capa,liste_demande, "NAME_2")
+liste_capa$pourcent <- liste_capa$n.x*100/liste_capa$n.y
+liste_capa$NAME_2 <- tolower(liste_capa$NAME_2)
+fra$NAME_2 <- tolower(fra$NAME_2)
+liste_capa[liste_capa=="corse du sud"] <- "corse-du-sud"
+fra <- merge(fra, liste_capa, "NAME_2")
+#fra <- fra %>% filter(NAME_2 != "paris")
+
+ggplot(fra, aes(fill = n.y, geometry = geometry), color = "white", size = 0.2) +
+  geom_sf() +
+  coord_sf(datum = NA, expand = FALSE) +
+  ggtitle("Répartitions du nombre de candidature\ndes départements en métropole") +
+  theme(panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 16)) + 
+  scale_fill_gradient(low="white", high = "#004b05") +
+  labs(fill="Nombres de demandes d'étudiants")
+```
+
+
+# Essomanam
+
+## Quel est le nombre de candidatures par filière en 2022 ?
+
+```{r}
+data_group_by_fili <- fr_esr_parcoursup%>%
+  group_by(fili)
+resume_by_fili <- data_group_by_fili %>% 
+  summarise(
+  sum_by_fili = sum(voe_tot)
+  )
+ggplot(resume_by_fili, aes(x=sum_by_fili, y=(fct_reorder(fili,sum_by_fili,.fun="median")),fill = fili))+ #fct_rev pour inverser l'ordre du graphe
+geom_bar(stat = "identity")+
+#geom_jitter()+
+labs( title = "Candidatures par filière au Parcoursup en 2022", x = "Nombre de candidature",y ="filière")+
+#geom_text(aes(label = paste0(sprintf("%.1f", sum_voe_tot))), vjust = -0.5) +
+theme(legend.position="none");
+```
+
+## Nombre de candidature par academie
+
+```{r}
+nouveau <- fr_esr_parcoursup%>%
+  group_by(acad_mies)
+resumes <- nouveau %>% 
+  summarise(
+  sum_voe_tot = sum(voe_tot)
+  )
+resumes$frequence <- resumes$sum_voe_tot/sum(resumes$sum_voe_tot)
+  
+ggplot(resumes, aes(x=sum_voe_tot, y=(fct_reorder(acad_mies,sum_voe_tot,.fun="median")),fill = acad_mies))+ #fct_rev pour inverser l'ordre du graphe
+geom_bar(stat = "identity")+
+#geom_jitter()+
+labs( title = "Candidatures par Academie au Parcoursup en 2022", x = "Nombre de candidature",y ="Academies")+
+#geom_text(aes(label = paste0(sprintf("%.1f", sum_voe_tot))), vjust = -0.5) +
+theme(legend.position="none")+
+  #theme_bw() +
+  theme(panel.background = element_rect(fill = "gray"))
+#round(frequence)
+```
+
+Il est evident de voir que l'academie Paris a le plus grand nombre  candidature du parcours sup 2022 environs 1400000 Candidature, par contre l'academie de Polynesie Française resente moins de candidatures 
+
+## effectif des boursiers en fonction des candidats
+```{r}
+library(ggplot2)
+
+ggplot(fr_esr_parcoursup, aes(y = nb_voe_pp_bt_brs + nb_cla_pp_bp_brs, x = voe_tot, fill = fili, color =fili)) +
+  geom_point() +
+  labs(y = "Boursier terminale pedagogique et profetionelle",x = "nombre de candidat par etablissement" ,title = "graphe des boursiers en fonction des candidats")
+```
+
+Dans la majeure partie des filieres, le nombres de boursiers evolue en fonction des du nombre de candidatures par contre dans  les Ecoles d'ingenieurs et dans les filiere CPGE le nombre de boursieers est quasiment constante avec 
+
+# Xinyuan
+
+
+## 1. Quel est le taux d'acceptation global pour toutes les filières ?
+
+### Calculer la moyenne:
+
+```{r}
+tauxDAcceptation <- fr_esr_parcoursup$prop_tot/fr_esr_parcoursup$voe_tot
+moyenne_tauxDAcceptation <- sum(tauxDAcceptation)/nrow(fr_esr_parcoursup)
+```
+
+<br />
+
+nous avons obtenu le taux d'acceptation d'un établissement en divisant "prop_tot"(Effectif total des candidats ayant reçu une proposition d’admission de la part de l’établissem ent) par "voe_tot"(Effectif total des candidats pour une formation).
+
+Ainsi pour obtenir le taux d'acceptation globale, nous avons choisi la moyenne des taux d'acceptation: pour ce faire, nous avons diviser la somme des taux d'acceptation par le nombre de ligne(qui est donc le nombre d'établissement) du jeu de données.
+
+### Horizontal bar chart:
+
+```{r}
+horizontal_bar_donnees_Acceptation <- data.frame(accepter = c("Oui", "Non"), tauxRespectif = c(moyenne_tauxDAcceptation, (1-moyenne_tauxDAcceptation)))
+AcceptationHorizontalBar <- ggplot(horizontal_bar_donnees_Acceptation, aes(x = accepter, y = tauxRespectif))+
+  geom_col(aes(fill = tauxRespectif), width = 0.5) +
+  ggtitle("Taux d'acceptation global en phase principale des établissements") + 
+  xlab("Accepté?") + ylab("Taux d'acceptation/de non-acceptation") + 
+  scale_y_continuous(labels = scales::percent_format()) + 
+  coord_flip() +
+  theme(legend.position = "none") +
+  geom_label(aes(label = paste0(round(tauxRespectif*100, 1), "%")), color = "black", fontface = "bold", position = position_stack(vjust = 0.5), size = 5)
+
+AcceptationHorizontalBar
+```
+<br />
+
+
+Ce diagramme, sous forme d'un bar chart horizontal, illustre la comparaison entre le taux d'acceptation global et le taux de non-acceptation global des établissement sur la plateforme ParcourSup en 2022. L'axe des abscisses représente les taux et l'axe des ordonnées représente les deux cas: "accepté" et "non-accepté". 
+Nous constatons que le taux de non-acceptation est assez important par rapport au taux d'acceptation.
+
+<br />
+<br />
+
+## 2. Quels sont les taux d'acceptation par académie ?
+
+### créer un dataframe permettant de regrouper les taux d'acceptation par académie:
+
+```{r}
+tauxParAcademie <- fr_esr_parcoursup %>%
+  group_by(acad_mies) %>%
+  summarize(tauxParAcademie = mean(prop_tot/voe_tot))
+```
+Pour calculer le taux par académie, nous avons d'abord regrouper les données par "acad_mies"(Académie de l’établissem ent). Ensuite nous utilisons "summarize" et la méthode comme dans la question précédente pour calculer la moyenne de taux d'acceptation par académie.
+
+<br />
+
+### graphe:
+
+```{r}
+bar_tauxParAcademie <- ggplot(tauxParAcademie, aes(x = acad_mies, y = tauxParAcademie)) +
+  geom_bar(stat = "identity", fill="#234E70") +
+  geom_text(aes(label = paste0(round(tauxParAcademie*100,1),"%")), angle = 90, vjust = 0.5, size = 4, nudge_y = 0.03) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  xlab("Académie") +
+  ylab("Taux d'acceptation") +
+  ggtitle("Taux d'acceptation par académie en phase principale") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+bar_tauxParAcademie
+```
+
+Nous avons ainsi obtenu un diagramme du type bar plot, illustrant le taux d'acceptation de chaque académie en phase principale. Sur l'axe des abscisses nous avons les académies, et sur l'axe des ordonnées nous avons les taux d'acceptation. Nous constatons que l'académie avec le taux d'acceptation le plus haut est celle de Corse, et l'académie ayant le taux le plus bas est celle de Mayotte.
+
+<br />
+<br />
+
+## 3. Quels sont les taux d'acceptation par type de baccalauréat en 2022 ?
+
+### taux d'acceptation terminale générale:
+```{r}
+subset_terminaleGenerale <- subset(fr_esr_parcoursup, prop_tot_bg > 0 & nb_voe_pp_bg > 0)
+taux_terminale_generale <- subset_terminaleGenerale$prop_tot_bg / (subset_terminaleGenerale$nb_voe_pp_bg+subset_terminaleGenerale$nb_voe_pc_bg) #"pc": phase complémentaire
+moyenne_taux_terminale_generale <- mean(taux_terminale_generale)
+```
+
+
+### taux d'acceptation terminale technologique:
+```{r}
+subset_terminaleTech <- subset(fr_esr_parcoursup, prop_tot_bt > 0 & nb_voe_pp_bt > 0)
+taux_terminale_Tech <- subset_terminaleTech$prop_tot_bt / (subset_terminaleTech$nb_voe_pp_bt+subset_terminaleTech$nb_voe_pc_bt)
+moyenne_taux_terminale_Tech <- mean(taux_terminale_Tech)
+```
+
+### taux d'acceptation terminale Pro:
+```{r}
+subset_terminalePro <- subset(fr_esr_parcoursup, prop_tot_bp > 0 & nb_voe_pp_bp > 0)
+taux_terminale_Pro <- subset_terminalePro$prop_tot_bp / (subset_terminalePro$nb_voe_pp_bp+subset_terminalePro$nb_voe_pc_bp)
+moyenne_taux_terminale_Pro <- mean(taux_terminale_Pro)
+```
+
+### taux d'acceptation autres candidats:
+```{r}
+subset_AutresCandidats <- subset(fr_esr_parcoursup, prop_tot_at > 0 & nb_voe_pp_at > 0)
+taux_AutresCandidats <- subset_AutresCandidats$prop_tot_at / (subset_AutresCandidats$nb_voe_pp_at+subset_AutresCandidats$nb_voe_pc_at)
+moyenne_taux_AutresCandidats <- mean(taux_AutresCandidats)
+```
+
+<br />
+
+Pour répondre à cette question, nous avons d'abord défini les sous-ensembles de notre jeu de données: "subset_terminaleGenerale", "subset_terminaleTech", "subset_terminalePro" et "subset_AutresCandidats" pour déterminer quels établissements prennent ou prennent pas des candidats issus de certains types de baccalauréat. 
+Ensuite nous calculons les taux d'acceptation respectifs, en comptant à la fois la phase principale et la phase complémentaire.
+
+### graphe:
+```{r}
+typeFormation <- rep(c("Terminale Générale", "Terminale Technologique", "Terminale Professionnelle", "Autres Candidats"), each = 2)
+siAccepte <- rep(c("Oui", "Non"), 4)
+
+#changer l'ordre
+typeFormation <- factor(typeFormation, levels = c("Terminale Générale", "Terminale Technologique", "Terminale Professionnelle", "Autres Candidats"))
+siAccepte <- factor(siAccepte, levels = c("Oui", "Non")) 
+
+tauxParFormation<- c(moyenne_taux_terminale_generale, 1-moyenne_taux_terminale_generale, moyenne_taux_terminale_Tech, 1-moyenne_taux_terminale_Tech, moyenne_taux_terminale_Pro, 1-moyenne_taux_terminale_Pro, moyenne_taux_AutresCandidats, 1-moyenne_taux_AutresCandidats)
+df_tauxParType <- data.frame(typeFormation, siAccepte, tauxParFormation) 
+grapheTauxParType <- ggplot(df_tauxParType, aes(fill=siAccepte, x=typeFormation, y=tauxParFormation)) +
+  geom_bar(position="fill", stat="identity") +
+  xlab("Type de baccalauréat") + 
+  ylab("Taux d'acceptation/de non-acceptation") +
+  ggtitle("Taux d'acceptation par type de baccalauréat, en phases principale et complémentaire") + 
+  labs(fill = "Accepté?") +
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = scales::percent(tauxParFormation)), fontface = "bold", position = position_fill(vjust = 0.5))+
+  scale_fill_manual(values = c("#FBF8BE","#234E70"))
+
+grapheTauxParType
+```
+
+<br />
+
+Nous avons donc obtenu un diagramme du type stacked bar chart, illustrant les taux d'accepttation par type de baccalauréat, en phases principale et complémentaire. Sur l'axe des abscisses nous avons les quatre types de baccalauréat dont les candidats sont issus:Terminale Générale, Terminale Technologique, Terminale Professionnelle et Autres candidats. Sur l'axe des ordonnées nous avons les taux d'acceptation/de non-acceptation. Enfin, nous avons utilisé deux couleurs pour représenter les deux cas: jaune pour "accepté" et bleu foncé pour "non accepté".
+Sur chaque colonne, nous avons les pourcentages respectifs des deux cas. Nous pouvons constater que les candidats qui sont issus de Terminale Générale ont le taux d'acceptation le plus haut, et ceux qui ne sont pas issus de Terminale Générale, Technologique ou Professionnelle ont le taux d'acceptation le plus bas
+
+
+# Noé
+
+## Les UT
+
+```{r filterUT}
+#Filtrer le dataset pour avoir seulement les UT (UTT, UTC, UTBM)
+UT <- filter(fr_esr_parcoursup,  lib_for_voe_ins == "Formation d'ingénieur Bac + 5 - Série générale", str_detect(g_ea_lib_vx,"Université de Technologie"))
+UT <- UT[-4,]
+
+UT21 <- filter(fr_esr_parcoursup_2021,  lib_for_voe_ins == "Formation d'ingénieur Bac + 5 - Série générale", str_detect(g_ea_lib_vx,"Université de Technologie"))
+UT21 <- UT21[-3,]
+
+UT20 <- filter(fr_esr_parcoursup_2020,  regr_forma == "Réseau des Universités de Technologie", str_detect(g_ea_lib_vx,"Université de Technologie"), detail_forma == "Bac S")
+UT20 <- UT20[-3,]
+```
+
+Différents graphes de comparaison entre les différents UT (UTT, UTC, UTMB)
+Comparaison faite sur les partcours ingénieurs de ces trois écoles.
+
+```{r cars}
+#On récupère les données sur les candidats totaux et candidates des années 2020, 2021 et 2022
+comparUT <- UT %>%
+  filter(g_ea_lib_vx == "UTT Université de Technologie de Troyes")%>%
+  select(session, voe_tot, voe_tot_f)
+comparUT21 <- UT21 %>%
+  filter(g_ea_lib_vx == "UTT Université de Technologie de Troyes")%>%
+  select(session, voe_tot, voe_tot_f)
+comparUT20 <- UT20 %>%
+  filter(g_ea_lib_vx == "UTT Université de Technologie de Troyes")%>%
+  select(session, voe_tot, voe_tot_f)
+
+#Fusion des dataset en une seule
+evolCandidats <- rbind(comparUT, comparUT21, comparUT20) %>%
+  mutate(voe_tot_h = voe_tot - voe_tot_f) %>%
+  gather(Voeux, Nombre, -session, -voe_tot)
+
+evolCandidats$Voeux = factor(evolCandidats$Voeux, levels = c("voe_tot_h", "voe_tot_f"))
+
+# Création du graphique en courbes
+ggplot(evolCandidats, aes(x = session, y = Nombre, fill = Voeux)) +
+  geom_area(colour = "black", size = .2, alpha = .4) +
+  geom_line(aes(x = session, y = voe_tot)) +
+  geom_point(aes(x = session, y = voe_tot)) +
+  scale_fill_manual(labels = c("Candidats",
+                               "Canditates"),
+                    values = c("lightblue3","red")) +
+  labs(x = "\n Année", y = "Nombre de candidats\n", title = "\n Nombre de candidats / candidates à l'UTT \n") +
+  scale_x_continuous(breaks = c(2020, 2021, 2022))
+```
+
+### Comparaison entre les UT
+
+```{r}
+#Sélectionne seulement le nombre de candidature pour les UT et le nombre de place disponible
+
+dataUT <- UT %>%
+  select(ville_etab,voe_tot, capa_fin) %>%
+  gather(legend, value, -ville_etab)
+
+#Graphique qui compare le nombre de candidature et le nombre de place pour chaque UT
+ggplot(dataUT, aes(x = ville_etab, y = value, fill = legend)) +
+  geom_col(position = "dodge") + 
+  #  facet_grid(. ~legend)+
+  geom_text(aes(label=value), vjust= -0.3, color="black",position = position_dodge(0.9), size=3.5)+
+  labs(x = "\n Université de Technologie", y = "Nombre\n", title = "\n Nombre de places / nombre de candidatures aux UT \n") +
+  scale_fill_discrete(name = "Légende", labels = c("Capacité", "Candidature"))
+
+```
+
+```{r Proposition}
+dataUT2 <- UT %>%
+  select(ville_etab,prop_tot, acc_tot, acc_tot_f) %>%
+  gather(legend, value, -ville_etab)
+
+ggplot(dataUT2, aes(x = ville_etab, y = value, fill = legend)) +
+  geom_col(position = "dodge") + 
+  #facet_grid(. ~legend)+
+  geom_text(aes(label=value), vjust= -0.3, color="black",position = position_dodge(0.9), size=3.5)+
+  scale_fill_manual(name = "Candidats",
+                    values = c("prop_tot" = "#66c2a5",
+                               "acc_tot" = "#8da0cb",
+                               "acc_tot_f" = "#e78ac3"),
+                    labels = c("Masculin ayant accepté",
+                               "Féminin ayant accepté",
+                               "Ayant reçu une proposition")) +  
+  labs(x = "\n Université de Technologie", y = "Nombre\n", title = "\n Proposition d'admission \n")
+
+```
+
+
+```{r }
+dataUT3 <- UT %>%
+  select(ville_etab, pct_sansmention ,pct_ab, pct_b, pct_tb, pct_tbf) %>%
+  rename(c(Ville = ville_etab, Sans_Mention = pct_sansmention, Assez_Bien = pct_ab, Bien = pct_b, Très_Bien = pct_tb, Fécilitations = pct_tbf)) %>%
+  gather(Mention, Nombre, -Ville)
+
+dataUT3$Mention <- factor(dataUT3$Mention, levels = c("Fécilitations", "Très_Bien", "Bien", "Assez_Bien", "Sans_Mention"))
+
+ggplot(dataUT3, aes(x = Ville, y = Nombre, fill = Mention, order = Mention)) +
+  labs(title = "\n Mention au bac des admis \n") +
+  geom_col(colour = "black", position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_brewer(palette = "PuBu")
+
+```
+
