@@ -47,7 +47,7 @@ shinyServer(function(input, output) {
   
   data_tauxParAcademie <- reactive({
   data_tauxParAcademie <- tauxParAcademie %>%
-    filter(tauxParAcademie > as.numeric(gsub("%", "", input$seuilTauxParAcademie))/100)})
+    filter(tauxParAcademie < as.numeric(gsub("%", "", input$seuilTauxParAcademie))/100)})
   
   
   output$plot2 <- renderPlot({

@@ -28,8 +28,8 @@ dashboardPage(
               h2("Taux d'acceptation par académie en phase principale"),
               sliderTextInput(
                 inputId = "seuilTauxParAcademie",
-                label = "Choisissez le seuil minimal du taux d'acceptation:", 
-                choices = c("50%", "45%", "40%", "35%", "30%", "25%", "20%"),
+                label = "Choisissez le seuil maximal du taux d'acceptation:", 
+                choices = c("25%", "30%", "35%", "40%", "45%", "50%", "55%"),
                 grid = TRUE
               ),
               plotOutput("plot2", width = "90vw", height = "90vh")
