@@ -9,8 +9,6 @@ library(rnaturalearthdata)
 library(plotly)
 library(shinyWidgets)
 
-dataset <- starwars
-
 
 fr_esr_parcoursup <- read_delim("../data/fr-esr-parcoursup.csv", 
                                 delim = ";", escape_double = FALSE, na = "NA", 
@@ -30,13 +28,40 @@ shinyServer(function(input, output) {
   
   # Graphe 1 : Carte Formation
   
+  list_forma <- reactive ({
+    if(input$annee == 2022 || input$annee == 2021) {
+      listForma <- list("BTS", "Autre formation", "CPGE", "Licence", "BUT", "Ecole de Commerce", "Ecole d'Ingénieur", "IFSI", "EFTS", "Licence_Las", "PASS")
+    } else {
+      listForma <- list("BTS", "Autre formation", "CPGE", "Licence", "DUT", "Ecole de Commerce", "Ecole d'Ingénieur", "IFSI", "EFTS", "Licence_Las", "PASS")
+    }
+    listForma
+  })
+  
+  output$list_forma <- renderUI({
+    pickerInput(
+      inputId = "fili",
+      label = "Formations:", 
+      choices = list_forma(),
+      multiple = TRUE,
+      selected = list_forma()
+    )
+  })
+    
+  
+  
+  
   data_graph <- reactive({
-    data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
+    if (input$annee == 2022) {
+      data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
+    } else if (input$annee == 2021) {
+      data_graph <- subset(fr_esr_parcoursup_2021, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
+    } else {
+      data_graph <- subset(fr_esr_parcoursup_2020, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
+    } 
     data_graph <- data_graph %>% separate(g_olocalisation_des_formations, c("lat","long"), sep=",") %>% transform(long = as.numeric(long), lat = as.numeric(lat)) %>%  filter(lat > 41.6, lat < 51.5, fili %in% input$fili)
     data_graph <- data_graph %>% group_by(lat,long,fili) %>% mutate(quantite=n())
     data_graph
   })
- 
 
   world <- ne_countries(scale = "medium", returnclass = "sf")
 
@@ -50,15 +75,43 @@ shinyServer(function(input, output) {
             axis.title = element_blank())
   })
   
+  
   # Graphe 2 : taux d'acceptation par académie
-
-  tauxParAcademie <- fr_esr_parcoursup %>%
-    group_by(acad_mies) %>%
-    summarize(tauxParAcademie = mean(prop_tot/voe_tot))
+  
+  val_pourcentage <- reactive ({
+    if (input$annee == 2022) {
+      pourcentage <- c("25%", "30%", "35%", "40%", "45%", "50%", "55%")
+    } else if (input$annee == 2021) {
+      pourcentage <- c("30%", "35%", "40%", "45%", "50%", "55%", "60%")
+    } else {
+      pourcentage <- c("25%", "30%", "35%", "40%", "45%", "50%", "55%", "60%")
+    } 
+    pourcentage
+  })
+  
+  output$val_pour <- renderUI({
+    sliderTextInput(
+      inputId = "seuilTauxParAcademie",
+      label = "Choisissez le seuil maximal du taux d'acceptation :",
+      choices = val_pourcentage(),
+      grid = TRUE
+    )
+  })
   
   data_tauxParAcademie <- reactive({
-    data_tauxParAcademie <- tauxParAcademie %>%
-    filter(tauxParAcademie < as.numeric(gsub("%", "", input$seuilTauxParAcademie))/100)
+    if (input$annee == 2022) {
+      tauxParAcademie <- fr_esr_parcoursup 
+    } else if (input$annee == 2021) {
+      tauxParAcademie <- fr_esr_parcoursup_2021
+    } else {
+      tauxParAcademie <- fr_esr_parcoursup_2020
+    } 
+    tauxParAcademie <-  tauxParAcademie %>%
+      group_by(acad_mies) %>%
+      subset(voe_tot != 0) %>%
+      summarize(tauxParAcademie = mean(prop_tot/voe_tot)) %>%
+      filter(tauxParAcademie < as.numeric(gsub("%", "", input$seuilTauxParAcademie))/100)
+    tauxParAcademie  
   })
   
   output$plot2 <- renderPlot({
