@@ -283,7 +283,7 @@ grapheTauxParType <- ggplot(df_tauxParType, aes(fill=siAccepte, x=typeFormation,
   labs(fill = "Accepté?") +
   scale_y_continuous(labels = scales::percent_format())+
   geom_text(aes(label = scales::percent(tauxParFormation)), fontface = "bold", position = position_fill(vjust = 0.5), color = "white")+
-  scale_fill_manual(values = c("#132b43","#56b1f7"))
+  scale_fill_manual(values = c("#56b1f7","#132b43"))
 
 grapheTauxParType
 ```
