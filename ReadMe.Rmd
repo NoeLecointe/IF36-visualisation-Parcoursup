@@ -106,55 +106,58 @@ ggplot(fra, aes(fill = n.y, geometry = geometry), color = "white", size = 0.2) +
 ## Quel est le nombre de candidatures par filière en 2022 ?
 
 ```{r}
-data_group_by_fili <- fr_esr_parcoursup%>%
-  group_by(fili)
-resume_by_fili <- data_group_by_fili %>% 
+options(scipen = 999)
+resume_by_fili <- fr_esr_parcoursup %>%
+  group_by(fili) %>%
+
   summarise(
-  sum_by_fili = sum(voe_tot)
+    sum_by_fili = sum(voe_tot)
   )
 
-ggplot(resume_by_fili, aes(x=sum_by_fili, y=(fct_reorder(fili,sum_by_fili,.fun="median")),fill = fili))+ #fct_rev pour inverser l'ordre du graphe
-  geom_bar(stat = "identity")+
-  #geom_jitter()+
-  labs( title = "Candidatures par filière au Parcoursup en 2022", x = "Nombre de candidature",y ="filière")+
-  #geom_text(aes(label = paste0(sprintf("%.1f", sum_voe_tot))), vjust = -0.5) +
-  theme(legend.position="none");
-```
+ # ordonne les filieres regroupeé dans l'ordre croissant de ccandidatures
+resume_by_fili$fili <- factor(resume_by_fili$fili, levels = resume_by_fili$fili[order(resume_by_fili$sum_by_fili)])
 
-## Nombre de candidature par academie
-
-```{r}
-nouveau <- fr_esr_parcoursup%>%
-  group_by(acad_mies)
-resumes <- nouveau %>% 
-  summarise(
-  sum_voe_tot = sum(voe_tot)
-  )
-resumes$frequence <- resumes$sum_voe_tot/sum(resumes$sum_voe_tot)
+ggplot(resume_by_fili, aes(y = sum_by_fili, x = fili, fill = fili)) + 
+  geom_bar(stat = "identity") +
   
-ggplot(resumes, aes(x=sum_voe_tot, y=(fct_reorder(acad_mies,sum_voe_tot,.fun="median")),fill = acad_mies))+ #fct_rev pour inverser l'ordre du graphe
-  geom_bar(stat = "identity")+
-  #geom_jitter()+
-  labs( title = "Candidatures par Academie au Parcoursup en 2022", x = "Nombre de candidature",y ="Academies")+
-  #geom_text(aes(label = paste0(sprintf("%.1f", sum_voe_tot))), vjust = -0.5) +
-  theme(legend.position="none")+
-  #theme_bw() +
-  theme(panel.background = element_rect(fill = "gray"))
-  #round(frequence)
+  # Ajout les valeurs sur les barres avec geom_text
+  geom_text(aes(label = sum_by_fili), hjust = 0.5, vjust = -0.2) +  
+  labs(title = "Candidatures par filière au Parcoursup en 2022",
+       y = "Nombre de candidatures",
+       x = "Filière") +
+  scale_fill_discrete(name = "Filières") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.4))
+  
 ```
-
-Il est evident de voir que l'academie Paris a le plus grand nombre  candidature du parcours sup 2022 environs 1400000 Candidature, par contre l'academie de Polynesie Française resente moins de candidatures 
+les Filière Licence au ParcourSup 2022 a été la plus representative, à l'opposé, les filière EFTS a été la moins representée
 
 ## effectif des boursiers en fonction des candidats
+
 ```{r}
 library(ggplot2)
 
-ggplot(fr_esr_parcoursup, aes(y = nb_voe_pp_bt_brs + nb_cla_pp_bp_brs, x = voe_tot, fill = fili, color =fili)) +
+ggplot(fr_esr_parcoursup, aes(y = nb_voe_pp_bt_brs , x = voe_tot, fill = fili, color =fili)) +
   geom_point() +
-  labs(y = "Boursier terminale pedagogique et profetionelle",x = "nombre de candidat par etablissement" ,title = "graphe des boursiers en fonction des candidats")
+  labs(y = "Boursier terminale pedagogique et profetionelle",
+       x = "nombre de candidat par etablissement" ,
+       title = "graphe des boursiers en fonction des candidats")
+```
+Nous voulions voir le lien entre le nombre de boursier et celui de candidatures pours chaque type de Formation. Mais ce nuage de point semble ne pas etre tres claire , alors nous fesons un boxplot du ratio des boursier bour plus voir la  repartition et donner une conclusion  plus vivante.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(fr_esr_parcoursup,
+       aes(x= fili, y = ((nb_voe_pp_bt_brs + nb_cla_pp_bp_brs)/voe_tot)*100) ) + 
+  geom_boxplot(notch = FALSE, outlier.shape = NA,fill = "green", color = "black", size = 0.5) +
+  labs(y = "Ratio des boursiers",
+       x = "Type de Formation",
+       title = "boxplot du ratio des des boursiers par filiere") +
+  ylim(0, 33)+
+  theme(axis.text.x = element_text(angle =90, hjust = 0.4))
+
 ```
 
-Dans la majeure partie des filieres, le nombres de boursiers evolue en fonction des du nombre de candidatures par contre dans  les Ecoles d'ingenieurs et dans les filiere CPGE le nombre de boursieers est quasiment constante avec 
+Le boxplot nous permet qu'il y a moins de boursiers dans les filieres d'ingenieures et dans les ecoles de commerce (les boursiers sont en moyene quasi inexistant), Par lla filiere BTS garde enormament de boursier (generalement plus de 10% des candidats sont boursiers)
+cela veut dire que dans la majeure partie des filieres, le nombres de boursiers evolue en fonction du nombre de candidatures par contre dans  les Ecoles d'ingenieurs et dans les filiere CPGE le nombre de boursieers est quasiment constante
 
 # Xinyuan
 
