@@ -26,7 +26,94 @@ fr_esr_parcoursup_2020 <- read_delim("../data/fr-esr-parcoursup_2020.csv",
 
 shinyServer(function(input, output) {
   
-  # Graphe 1 : Carte Formation
+  annee <- reactive({
+    input$annee
+  })
+  
+  #Onglet 1 : Informations générales
+  
+  
+  
+  
+  # Onglet 2 : Information par Académie
+    
+    #Récupère toute les académies
+    aca <- unique(fr_esr_parcoursup$acad_mies)
+    
+    #Ouput d'un select avec toute les académies
+    output$academie <- renderUI({
+      selectInput("acad", "Choisir une académie", choices = aca)
+    })
+    
+    #En fonction de l'académie séléctionné, on récupère tout les établissement lié à celle ci
+    etablissement <- reactive({
+      etab <- fr_esr_parcoursup %>%
+        group_by(g_ea_lib_vx) %>%
+        filter(acad_mies == input$acad)
+      unique(etab$g_ea_lib_vx)
+    })
+    
+    #Ouput d'un select avec tout les établissement de l'académie
+    output$etab <- renderUI({
+      selectInput("etab", "Choisir un établissement", choices = etablissement())
+    })
+  
+    #Récupère différentes information de l'académie séléctionné dans le select
+    academie <- reactive ({
+      fr_esr_parcoursup %>%
+        group_by(acad_mies) %>%
+        summarize(canditat_tot = sum(voe_tot), candidates = sum(voe_tot_f), candidats = sum(voe_tot) - sum(voe_tot_f), place_tot = sum(capa_fin)) %>%
+        filter(acad_mies == input$acad)
+    })
+  
+    #Ouput du nom de l'académie
+    output$acade <- renderText({
+      paste(academie()$acad_mies)
+    })
+    
+    #Ouput une ValueBox avec le nombre total de candidats de l'académie
+    output$candidat_tot <- renderValueBox({
+      valueBox(academie()$canditat_tot, "Candidats total", icon = icon("list"), color = "red")
+    })
+    
+    #Ouput une ValueBox avec le nombre total de candidats féminin de l'académie
+    output$candidat_tot_f <- renderValueBox({
+     valueBox(academie()$candidates, "Candidats total fémnin", icon = icon("list"), color = "red")
+    })
+    
+    #Ouput une ValueBox avec le nombre total de candidats masculin de l'académie
+    output$candidat_tot_m <- renderValueBox({
+     valueBox(academie()$candidats, "Candidats total masculin", icon = icon("list"), color = "red")
+    })
+    
+    #Ouput une ValueBox avec le nombre total de place tout établissement confondu de l'académie
+    output$place_tot <- renderValueBox({
+     valueBox(academie()$place_tot, "Place total", icon = icon("list"), color = "red")
+    })
+    
+    
+    #Ouput une ValueBox avec le nom de l'établissement
+    output$etabli <- renderText({
+      etab <- fr_esr_parcoursup %>%
+        group_by(g_ea_lib_vx) %>%
+        filter(g_ea_lib_vx == input$etab) %>%
+        summarise()
+      
+      paste(etab$g_ea_lib_vx)
+    })
+    
+    #Ouput avec les type de formation disponible dans l'établissement
+    output$type_forma <- renderText({
+      list_form <- fr_esr_parcoursup %>% 
+        filter(g_ea_lib_vx == input$etab) %>%
+        select(fili) %>%
+        group_by(fili) %>%
+        summarise()
+      
+      paste(list_form$fili)
+    })
+  
+  # Onglet 3 : Carte Formation
   
   list_forma <- reactive ({
     if(input$annee == 2022 || input$annee == 2021) {
@@ -38,18 +125,15 @@ shinyServer(function(input, output) {
   })
   
   output$list_forma <- renderUI({
-    pickerInput(
-      inputId = "fili",
-      label = "Formations:", 
-      choices = list_forma(),
-      multiple = TRUE,
-      selected = list_forma()
-    )
-  })
+      pickerInput(
+        inputId = "fili",
+        label = "Formations:", 
+        choices = list_forma(),
+        multiple = TRUE,
+        selected = list_forma()
+      )
+    })
     
-  
-  
-  
   data_graph <- reactive({
     if (input$annee == 2022) {
       data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
@@ -76,7 +160,7 @@ shinyServer(function(input, output) {
   })
   
   
-  # Graphe 2 : taux d'acceptation par académie
+  # Onglet 4 : taux d'acceptation par académie
   
   val_pourcentage <- reactive ({
     if (input$annee == 2022) {
@@ -124,7 +208,7 @@ shinyServer(function(input, output) {
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   })
   
-  # Onglet 3 : Comparaison entre les UTs
+  # Onglet 5 : Comparaison entre les UTs
   
   ## Filtrer le dataset pour avoir seulement les UT (UTT, UTC, UTBM)
   UT <- filter(fr_esr_parcoursup,  lib_for_voe_ins == "Formation d'ingénieur Bac + 5 - Série générale", str_detect(g_ea_lib_vx,"Université de Technologie"))
@@ -146,16 +230,11 @@ shinyServer(function(input, output) {
     } 
   })
   
-  annee <- reactive({
-    input$annee
-  })
-  
   output$plot3 <- renderPlotly({
     dataUT <- data() %>%
       select(g_ea_lib_vx,voe_tot, capa_fin) %>%
       rename(c(Ville = g_ea_lib_vx, Voeux_totaux = voe_tot, Capacité_maximal = capa_fin))%>%
       arrange(Ville)
-    
     
     dataUT$Ville <- c("Belfort", "Compiègne", "Troyes")
     dataUT<- gather(dataUT, legend, value, -Ville)

@@ -7,6 +7,10 @@ dashboardPage(
   dashboardHeader(title="Parcoursup"),
   dashboardSidebar(
     sidebarMenu(
+      menuItem("Informations", icon = icon("circle-info"),
+        menuSubItem("Générales", tabName= "gene"),
+        menuSubItem("Académies", tabName= "acad")
+      ),
       menuItem("Formations", tabName = "stats", icon = icon("table")),
       menuItem("Taux d'Acceptation", tabName = "academie", icon = icon("percent")),
       menuItem("Les UT", tabName = "UT", icon = icon("school"))
@@ -15,6 +19,41 @@ dashboardPage(
   ),
   dashboardBody(
     tabItems(
+      
+      tabItem(tabName = "gene",
+        infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
+        infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
+        infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
+      ),
+      tabItem(tabName = "acad",
+        h2("Informations"),
+        
+        fluidRow(
+          box(
+            uiOutput("academie")
+          ),
+          box(
+            uiOutput("etab")
+          )
+        ),
+        box(
+          title = "Académie", solidHeader = TRUE, status = "info",
+          width = 12, collapsible = TRUE, collapsed = TRUE,
+          h3(textOutput("acade"), style = "text-align:center;"),
+          valueBoxOutput("candidat_tot"),
+          valueBoxOutput("candidat_tot_f"),
+          valueBoxOutput("candidat_tot_m"),
+          valueBoxOutput("place_tot")
+        ),
+        box(
+          title = "Formation", solidHeader = TRUE, status = "warning",
+          width = 12, collapsible = TRUE, collapsed = TRUE,
+          h3(textOutput("etabli"), style = "text-align:center;"),
+          box(title = "Formation dans l'établissement", status = "info", solidHeader = TRUE, p(textOutput("type_forma")))
+        )
+        
+      ),
+      
       tabItem(tabName = "stats",
         h2("Répartition des formations en France métropolitaine"),
         uiOutput("list_forma"),
