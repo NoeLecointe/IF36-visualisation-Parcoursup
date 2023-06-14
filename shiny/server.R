@@ -118,7 +118,7 @@ shinyServer(function(input, output) {
     
     #Ouput une ValueBox avec le nombre total de candidats féminin de l'académie
     output$candidat_tot_f <- renderValueBox({
-     valueBox(academie()$candidates, "Candidats total fémnin", icon = icon("venus"), color = "fuchsia")
+     valueBox(academie()$candidates, "Candidats total féminin", icon = icon("venus"), color = "fuchsia")
     })
     
     #Ouput une ValueBox avec le nombre total de candidats masculin de l'académie
@@ -189,7 +189,7 @@ shinyServer(function(input, output) {
     
     #Ouput une ValueBox avec le nombre total de candidats féminin de la formation
     output$candidat_tot_f_forma <- renderValueBox({
-      valueBox(forma()$candidates, "Candidats total fémnin", icon = icon("venus"), color = "fuchsia")
+      valueBox(forma()$candidates, "Candidats total féminin", icon = icon("venus"), color = "fuchsia")
     })
     
     #Ouput une ValueBox avec le nombre total de candidats masculin de la formation
