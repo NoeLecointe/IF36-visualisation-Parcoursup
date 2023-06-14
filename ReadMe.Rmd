@@ -6,8 +6,16 @@ output:
   prettydoc::html_pretty:
     theme: cayman
     toc: true
-
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
+
+<style>
+body {
+text-align: justify}
+</style>
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE, fig.align="center", fig.width = 8)
@@ -16,7 +24,30 @@ options("scipen"=10)
 
 # Présentation
 
-Présenter le sujet ...
+Nous avons choisis le dataset "Parcoursup 2022 - vœux de poursuite
+d'études et de réorientation dans l'enseignement supérieur et réponses
+des établissements", disponible via
+<a href="https://data.education.gouv.fr/explore/dataset/fr-esr-parcoursup/table/?sort=tri" target="_blank">
+ce lien</a>.Nous avons également à notre disposition la méthodologie
+permettant d'interpréter ce jeu de données, qui est téléchargeable
+depuis
+<a href="https://data.education.gouv.fr/api/datasets/1.0/fr-esr-parcoursup/attachments/methodologie_opendata_2022_pdf/" target="_blank">
+ce lien</a>. Ce fichier nous permet surtout d'interpréter les noms de
+variables.
+
+Ce jeu de données, de source gouvernementale, présente les voeux de
+poursuite d'études et de réorientation ainsi que les propositions des
+établissements. Les données sont collectées à partir de la plateforme
+Parcoursup, couvrant l'ensemble de la campagne 2022 jusqu'au 16
+septembre 2022. Pour certaines études, nous avons récupéré les données
+de 2021 et 2020.
+
+L'objectif des études ci-dessous à de parcourir progressivement les
+données. Nous allons dans un premier temps analyser de manière générale
+le dataset pour comprendre si les formations sont équitablement
+réparties en france. Ensuite nous analyserons le nombre de candidats
+ainsi que les taux d'acceptations. Enfin nous analyserons un cas
+particulier: les différences entre les écoles d'un même groupe (UT).
 
 ```{r}
 library(readr)
@@ -47,8 +78,10 @@ ggplot(data=fr_esr_parcoursup, aes(fili)) + labs(x = "Formations",
   geom_text(stat='count', aes(label=..count..), hjust = -0.2) + labs(title="Nombres de types de formations")
 
 ```
-Graphique représentant le nombre de formations proposées sur parcourpsup pour l'année 2022. On remarque que les Licences et les BTS sont les formations les plus proposées.<br>
-<br>
+
+Graphique représentant le nombre de formations proposées sur parcourpsup
+pour l'année 2022. On remarque que les Licences et les BTS sont les
+formations les plus proposées.<br> <br>
 
 ## Cartes
 
@@ -71,8 +104,13 @@ ggplot(data = world) +
         axis.title = element_blank())
 
 ```
-Carte de la France métropolitaine représentant chaque formation proposé ainsi que le nombre de formations associé. Comme vu précédemment les BTS sont les plus représentés en nombre: ils sont également très bien réparti sur le territoire. A l'inverse, les Licence, Ecoles d'Ingénieurs ou encore les Ecoles de Commerces sont surtout situés dans les alentours des grandes villes.<br>
-<br>
+
+Carte de la France métropolitaine représentant chaque formation proposé
+ainsi que le nombre de formations associé. Comme vu précédemment les BTS
+sont les plus représentés en nombre: ils sont également très bien
+réparti sur le territoire. A l'inverse, les Licences, Ecoles
+d'Ingénieurs ou encore les Ecoles de Commerces sont surtout situés dans
+les alentours des grandes villes.<br> <br>
 
 ```{r}
 data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations", "acc_tot", "voe_tot"))
@@ -99,8 +137,12 @@ ggplot(fra, aes(fill = n.y, geometry = geometry), color = "white", size = 0.2) +
   scale_fill_gradient(low="white", high = "#004b05") +
   labs(fill="Nombres de demandes d'étudiants")
 ```
-Carte représentant les départements en France métropolitaine en fonction du nombre de candidature en 2022. On peut voir que Paris attire énormément. Cependant, Le Nord-Pas-de-Calais et le Rhône restent très demandés. De plus, on remarque que la diagonale du vide est présente avec moins de demandes dans ces départements.<br>
-<br>
+
+Carte représentant les départements en France métropolitaine en fonction
+du nombre de candidature en 2022. On peut voir que Paris attire
+énormément. Cependant, Le Nord-Pas-de-Calais et le Rhône restent très
+demandés. De plus, on remarque que la diagonale du vide est présente
+avec moins de demandes dans ces départements.<br> <br>
 
 ## Quel est le nombre de candidatures par filière en 2022 ?
 
@@ -128,8 +170,9 @@ ggplot(resume_by_fili, aes(y = sum_by_fili, x = fili, fill = fili)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.4))
   
 ```
-Les Licences regroupent la majorité des candidature en 2022, à l'oposé, les formation EFTS sont beaucoup attrayante.<br>
-<br>
+
+Les Licences regroupent la majorité des candidature en 2022, à l'oposé,
+les formation EFTS sont beaucoup attrayante.<br> <br>
 
 ## Effectif des boursiers en fonction des candidats
 
@@ -142,9 +185,12 @@ ggplot(fr_esr_parcoursup, aes(y = nb_voe_pp_bt_brs , x = voe_tot, fill = fili, c
        x = "nombre de candidat par etablissement" ,
        title = "graphe des boursiers en fonction des candidats")
 ```
-Nous souhaitions analyser la relation entre le nombre de candidatures dans une formation et le nombre de boursiers candidats.<br>
-Pour cela nous avons réalisé un nuage de points, mais ce dernier n'étant pas très clair, nous avons décidé de faire un boxplot afin de d'avoir une répartition et un graphe plus lisible.<br>
-<br>
+
+Nous souhaitions analyser la relation entre le nombre de candidatures
+dans une formation et le nombre de boursiers candidats.<br> Pour cela
+nous avons réalisé un nuage de points, mais ce dernier n'étant pas très
+clair, nous avons décidé de faire un boxplot afin de d'avoir une
+répartition et un graphe plus lisible.<br> <br>
 
 ```{r message=FALSE, warning=FALSE}
 ggplot(fr_esr_parcoursup,
@@ -158,12 +204,16 @@ ggplot(fr_esr_parcoursup,
 
 ```
 
-Le boxplot nous permet de voir qu'il y a moins de boursier dans les filières d'ingénieurs et dans les écoles de commerce (les boursiers sont en moyenne quasi inexistante). Les BTS ont, quant à eux, énormément de boursiers (généralement plus de 10% des candidats sont boursiers).<br>
-Cela montre que dans la majeure partie des formations, le nombre de boursiers évolue en fonction du nombre de candidatures sauf  dans les Ecoles d'ingénieurs et dans les CPGE où le nombre de boursiers reste constant.<br>
-<br>
+Le boxplot nous permet de voir qu'il y a moins de boursier dans les
+filières d'ingénieurs et dans les écoles de commerce (les boursiers sont
+en moyenne quasi inexistante). Les BTS ont, quant à eux, énormément de
+boursiers (généralement plus de 10% des candidats sont boursiers).<br>
+Cela montre que dans la majeure partie des formations, le nombre de
+boursiers évolue en fonction du nombre de candidatures sauf dans les
+Ecoles d'ingénieurs et dans les CPGE où le nombre de boursiers reste
+constant.<br> <br>
 
 ## Quel est le taux d'acceptation global pour toutes les filières ?
-
 
 ```{r}
 tauxDAcceptation <- fr_esr_parcoursup$prop_tot/fr_esr_parcoursup$voe_tot
@@ -181,8 +231,14 @@ AcceptationHorizontalBar <- ggplot(horizontal_bar_donnees_Acceptation, aes(x = a
 
 AcceptationHorizontalBar
 ```
-Ce diagramme, sous forme d'un bar chart horizontal, illustre la comparaison entre le taux d'acceptation global et le taux de non-acceptation global des établissement sur la plateforme ParcourSup en 2022. L'axe des abscisses représente les taux et l'axe des ordonnées représente les deux cas: "accepté" et "non-accepté". <br>
-Nous constatons que le taux de non-acceptation est assez important par rapport au taux d'acceptation.<br>
+
+Ce diagramme, sous forme d'un bar chart horizontal, illustre la
+comparaison entre le taux d'acceptation global et le taux de
+non-acceptation global des établissement sur la plateforme ParcourSup en
+2022. L'axe des abscisses représente les taux et l'axe des ordonnées
+représente les deux cas: "accepté" et "non-accepté". <br> Nous
+constatons que le taux de non-acceptation est assez important par
+rapport au taux d'acceptation.<br>
 
 <br>
 
@@ -205,7 +261,13 @@ bar_tauxParAcademie <- ggplot(tauxParAcademie, aes(x = acad_mies, y = tauxParAca
 
 bar_tauxParAcademie
 ```
-Nous avons ici un diagramme du type bar plot, illustrant le taux d'acceptation de chaque académie en phase principale. Sur l'axe des abscisses nous avons les académies, et sur l'axe des ordonnées nous avons les taux d'acceptation. Nous constatons que l'académie avec le taux d'acceptation le plus haut est celle de Corse, et l'académie ayant le taux le plus bas est celle de Mayotte.<br>
+
+Nous avons ici un diagramme du type bar plot, illustrant le taux
+d'acceptation de chaque académie en phase principale. Sur l'axe des
+abscisses nous avons les académies, et sur l'axe des ordonnées nous
+avons les taux d'acceptation. Nous constatons que l'académie avec le
+taux d'acceptation le plus haut est celle de Corse, et l'académie ayant
+le taux le plus bas est celle de Mayotte.<br>
 
 <br>
 
@@ -253,19 +315,31 @@ grapheTauxParType <- ggplot(df_tauxParType, aes(fill=siAccepte, x=typeFormation,
 
 grapheTauxParType
 ```
-Nous avons ici un diagramme du type stacked bar chart, illustrant les taux d'accepttation par type de baccalauréat, en phases principale et complémentaire. Sur l'axe des abscisses nous avons les quatre types de baccalauréat dont les candidats sont issus:Terminale Générale, Terminale Technologique, Terminale Professionnelle et Autres candidats. Sur l'axe des ordonnées nous avons les taux d'acceptation/de non-acceptation. Enfin, nous avons utilisé deux couleurs pour représenter les deux cas: jaune pour "accepté" et bleu foncé pour "non accepté".<br>
-Sur chaque colonne, nous avons les pourcentages respectifs des deux cas. Nous pouvons constater que les candidats qui sont issus de Terminale Générale ont le taux d'acceptation le plus haut, et ceux qui ne sont pas issus de Terminale Générale, Technologique ou Professionnelle ont le taux d'acceptation le plus bas.<br>
-<br>
+
+Nous avons ici un diagramme du type stacked bar chart, illustrant les
+taux d'accepttation par type de baccalauréat, en phases principale et
+complémentaire. Sur l'axe des abscisses nous avons les quatre types de
+baccalauréat dont les candidats sont issus:Terminale Générale, Terminale
+Technologique, Terminale Professionnelle et Autres candidats. Sur l'axe
+des ordonnées nous avons les taux d'acceptation/de non-acceptation.
+Enfin, nous avons utilisé deux couleurs pour représenter les deux cas:
+jaune pour "accepté" et bleu foncé pour "non accepté".<br> Sur chaque
+colonne, nous avons les pourcentages respectifs des deux cas. Nous
+pouvons constater que les candidats qui sont issus de Terminale Générale
+ont le taux d'acceptation le plus haut, et ceux qui ne sont pas issus de
+Terminale Générale, Technologique ou Professionnelle ont le taux
+d'acceptation le plus bas.<br> <br>
 
 # L'UTT
 
-Lors de nos recherches, on s'est questionné sur l'UTT en particulier, ainsi que sur les UT en général.<br>
-Nous nous sommes posé la question sur les différences entre les UT.<br>
+Lors de nos recherches, on s'est questionné sur l'UTT en particulier,
+ainsi que sur les UT en général.<br> Nous nous sommes posé la question
+sur les différences entre les UT.<br>
 
-Mais dans un premier temps, on s'est demandé quel était le ratio Homme / Femme sur les candidatures à l'UTT.
-Selon <i>l'étudiant</i>, début 2022, 28% des étudiants en écoles d'ingénieurs sont des femmes.<br>
-Nous avons décidé de faire un comparatif sur 3 ans, de 2020 à 2022.<br>
-<br>
+Mais dans un premier temps, on s'est demandé quel était le ratio Homme /
+Femme sur les candidatures à l'UTT. Selon <i>l'étudiant</i>, début 2022,
+28% des étudiants en écoles d'ingénieurs sont des femmes.<br> Nous avons
+décidé de faire un comparatif sur 3 ans, de 2020 à 2022.<br> <br>
 
 ```{r filterUT}
 #Filtrer le dataset pour avoir seulement les UT (UTT, UTC, UTBM)
@@ -308,21 +382,23 @@ ggplot(evolCandidats, aes(x = session, y = Nombre, fill = Voeux)) +
   scale_x_continuous(breaks = c(2020, 2021, 2022))
 ```
 
-Ce graphe montre qu'en moyenne, il y a environ 25% de candidats de l'UTT qui sont des femmes.<br>
-C'est un peu moins que ce qu'indique l'étudiant mais cela reste dans la moyenne.<br>
-En gardant bien en tête que ce graphe montre les candidatures à l'UTT et non les étudiants acceptés dans la formation.<br>
-<br>
+Ce graphe montre qu'en moyenne, il y a environ 25% de candidats de l'UTT
+qui sont des femmes.<br> C'est un peu moins que ce qu'indique l'étudiant
+mais cela reste dans la moyenne.<br> En gardant bien en tête que ce
+graphe montre les candidatures à l'UTT et non les étudiants acceptés
+dans la formation.<br> <br>
 
 ## Comparaison entre les UT
 
-L'UTT faisant partie du groupe des Universités de Technologie, nous avons trouvé intéressant le fait de comparer les écoles. (Uniquement la formation d'ingénieur)<br>
-Si l'on regarde le classement des écoles d'ingénieurs en France, l'ordre des UT est le suivant : <br>
-- UTC (Compiègne)<br>
-- UTT (Troyes)<br>
-- UTBM (Belfort Montbéliard)<br>
+L'UTT faisant partie du groupe des Universités de Technologie, nous
+avons trouvé intéressant le fait de comparer les écoles. (Uniquement la
+formation d'ingénieur)<br> Si l'on regarde le classement des écoles
+d'ingénieurs en France, l'ordre des UT est le suivant : <br> - UTC
+(Compiègne)<br> - UTT (Troyes)<br> - UTBM (Belfort Montbéliard)<br>
 
-Nous allons donc voir si les différentes données présentes dans le dataset de parcoursup 2022 reflète ce classement.<br>
-<br>
+Nous allons donc voir si les différentes données présentes dans le
+dataset de parcoursup 2022 reflète ce classement.<br> <br>
+
 ```{r}
 #Sélectionne seulement le nombre de candidature pour les UT et le nombre de place disponible
 
@@ -343,10 +419,12 @@ ggplot(dataUT, aes(x = g_ea_lib_vx, y = value, fill = legend)) +
 
 ```
 
-Dans ce premier graphes nous comparons le nombre de candidature avec le nombre de place disponible dans la formation.
-On peut voir que l'UTC est bien plus demandé que l'UTT et l'UTBM avec environ 1600 demandes de plus.<br>
-On retrouve ici l'odre indiqué au début, avec l'UTC ayant le plus de candidature, vient ensuite l'UTT puis l'UTBM avec presque 1500 candidatures de moins.<br>
-<br>
+Dans ce premier graphes nous comparons le nombre de candidature avec le
+nombre de place disponible dans la formation. On peut voir que l'UTC est
+bien plus demandé que l'UTT et l'UTBM avec environ 1600 demandes de
+plus.<br> On retrouve ici l'odre indiqué au début, avec l'UTC ayant le
+plus de candidature, vient ensuite l'UTT puis l'UTBM avec presque 1500
+candidatures de moins.<br> <br>
 
 ```{r Proposition}
 dataUT2 <- UT21 %>%
@@ -372,13 +450,21 @@ ggplot(dataUT2, aes(x = Ville, y = value, fill = legend)) +
   labs(x = "\n Université de Technologie", y = "Nombre\n", title = "\n Proposition d'admission \n")
 
 ```
-Dans ce deuxième graphe on retrouve les candidats ayant acceptés la proposition d'admission (femme et homme) ainsi que le nombre de candidats ayant reçu une proposition d'admission.<br>
-Grâce à ce graphe, on peut voir la parité homme femme dans la formation ainsi qu'une estimation sur le nombre de désistement malgré une proposition d'admission.<br>
-Encore une fois, on retrouve un même classement avec l'UTC en premier qui à envoyé une proposition d'admission à 1000 candidats pour environ 400 places, les candidats ont donc vite accepté leurs voeux.<br>
-Egalement, il y a une parité homme femme parfaite à l'UTC, ce qu'on ne retrouve pas dans les autres écoles.<br>
-L'UTT arrive en second avec 1600 candidats avec une proposition d'admission pour 280 admis, l'école est donc moins souvent en premier voeux des candidats que l'UTC.<br>
-Et en troisième l'UTBM où il y a 2350 candidats ayant reçu une proposition d'admission pour 265 places.<br>
-<br>
+
+Dans ce deuxième graphe on retrouve les candidats ayant acceptés la
+proposition d'admission (femme et homme) ainsi que le nombre de
+candidats ayant reçu une proposition d'admission.<br> Grâce à ce graphe,
+on peut voir la parité homme femme dans la formation ainsi qu'une
+estimation sur le nombre de désistement malgré une proposition
+d'admission.<br> Encore une fois, on retrouve un même classement avec
+l'UTC en premier qui à envoyé une proposition d'admission à 1000
+candidats pour environ 400 places, les candidats ont donc vite accepté
+leurs voeux.<br> Egalement, il y a une parité homme femme parfaite à
+l'UTC, ce qu'on ne retrouve pas dans les autres écoles.<br> L'UTT arrive
+en second avec 1600 candidats avec une proposition d'admission pour 280
+admis, l'école est donc moins souvent en premier voeux des candidats que
+l'UTC.<br> Et en troisième l'UTBM où il y a 2350 candidats ayant reçu
+une proposition d'admission pour 265 places.<br> <br>
 
 ```{r }
 dataUT3 <- UT21 %>%
@@ -397,12 +483,18 @@ ggplot(dataUT3, aes(x = Ville, y = Nombre, fill = Mention)) +
   scale_fill_brewer(palette = "PuBu")
 
 ```
-Pour ce dernier graphe, on s'est demandé quelle était la mention au bac des étudiants admis dans les UT.<br>
-Ici, seul les bac généraux sont comparé car aucun bac technologique est admis dans les UT que ce soit l'UTC, l'UTT ou l'UTBM.
-Ainsi, on retrouve ici aussi le même classement avec l'UTC ayant beaucoup d'étudiants avec les félicitations au bac, environ 70% de mention très bien et quelques mentions bien.<br>
-Vient en second l'UTT puis l'UTBM <br>
 
-Ces trois graphes nous montrent donc que ce classement à un impact qu'on retrouve dans les voeux des candidats.<br>
-<br>
+Pour ce dernier graphe, on s'est demandé quelle était la mention au bac
+des étudiants admis dans les UT.<br> Ici, seul les bac généraux sont
+comparé car aucun bac technologique est admis dans les UT que ce soit
+l'UTC, l'UTT ou l'UTBM. Ainsi, on retrouve ici aussi le même classement
+avec l'UTC ayant beaucoup d'étudiants avec les félicitations au bac,
+environ 70% de mention très bien et quelques mentions bien.<br> Vient en
+second l'UTT puis l'UTBM <br>
+
+Ces trois graphes nous montrent donc que ce classement à un impact qu'on
+retrouve dans les voeux des candidats.<br> <br>
 
 # Conclusion
+
+Au cours de nos analyses, nous avons découverts de nombreuses statistiques sur Parcoursup. Nous avons réalisé quels étaient la répartitions des formations, les taux de candidatures et d'acceptations et nous avons analysé le cas des écoles du groupe UT. Lors de notre travail, nous nous sommes rendus comptes que même si le dataset était dense, il nous manquait des données exprimant la temporalité. Il aurait été intéressant par exemple d'avoir les données que nous avons mais évoluant au cours des phases de réponses de parcoursup.
