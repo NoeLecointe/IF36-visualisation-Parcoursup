@@ -30,24 +30,59 @@ shinyServer(function(input, output) {
     input$annee
   })
   
+  dataset <- reactive({
+    if(annee() == 2022) {
+      fr_esr_parcoursup
+    } else if(annee() == 2021) {
+      fr_esr_parcoursup_2021
+    } else {
+      fr_esr_parcoursup_2020
+    }
+  })
+  
+  
+  
   #Onglet 1 : Informations générales
   
+  output$nb_établissement <- renderInfoBox({
+    nb_etab <- dataset() %>%
+      group_by(g_ea_lib_vx) %>%
+      summarise()
+    nb_etab <- nrow(nb_etab)
+    
+    infoBox("Nombre d'établissement", nb_etab, icon = icon("school"), color = "purple")
+  })
   
+  output$nb_formation <- renderInfoBox({
+    if(input$annee == 2020) {
+      nb_forma <- dataset() %>%
+        group_by(g_ea_lib_vx, lib_comp_voe_ins) %>%
+        summarise()
+    } else {
+      nb_forma <- dataset() %>%
+        group_by(g_ea_lib_vx, lib_for_voe_ins) %>%
+        summarise()
+    }
+    nb_forma <- nrow(nb_forma)
+    infoBox("Nombre de formations", nb_forma, icon = icon("graduation-cap"), color = "purple")
+  })
   
   
   # Onglet 2 : Information par Académie
     
     #Récupère toute les académies
-    aca <- unique(fr_esr_parcoursup$acad_mies)
+    aca <- reactive ({
+      unique(dataset()$acad_mies)
+    })
     
     #Ouput d'un select avec toute les académies
     output$academie <- renderUI({
-      selectInput("acad", "Choisir une académie", choices = aca)
+      selectInput("acad", "Choisir une académie", choices = aca())
     })
     
     #En fonction de l'académie séléctionné, on récupère tout les établissement lié à celle ci
     etablissement <- reactive({
-      etab <- fr_esr_parcoursup %>%
+      etab <- dataset() %>%
         group_by(g_ea_lib_vx) %>%
         filter(acad_mies == input$acad)
       unique(etab$g_ea_lib_vx)
@@ -60,11 +95,16 @@ shinyServer(function(input, output) {
   
     #Récupère différentes information de l'académie séléctionné dans le select
     academie <- reactive ({
-      fr_esr_parcoursup %>%
+      dataset() %>%
         group_by(acad_mies) %>%
-        summarize(canditat_tot = sum(voe_tot), candidates = sum(voe_tot_f), candidats = sum(voe_tot) - sum(voe_tot_f), place_tot = sum(capa_fin)) %>%
+        summarize(canditat_tot = sum(voe_tot),
+                  candidates = sum(voe_tot_f),
+                  candidats = sum(voe_tot) - sum(voe_tot_f),
+                  place_tot = sum(capa_fin)) %>%
         filter(acad_mies == input$acad)
     })
+    
+    
   
     #Ouput du nom de l'académie
     output$acade <- renderText({
@@ -73,17 +113,17 @@ shinyServer(function(input, output) {
     
     #Ouput une ValueBox avec le nombre total de candidats de l'académie
     output$candidat_tot <- renderValueBox({
-      valueBox(academie()$canditat_tot, "Candidats total", icon = icon("list"), color = "red")
+      valueBox(academie()$canditat_tot, "Candidats total", icon = icon("list"), color = "yellow")
     })
     
     #Ouput une ValueBox avec le nombre total de candidats féminin de l'académie
     output$candidat_tot_f <- renderValueBox({
-     valueBox(academie()$candidates, "Candidats total fémnin", icon = icon("list"), color = "red")
+     valueBox(academie()$candidates, "Candidats total fémnin", icon = icon("venus"), color = "fuchsia")
     })
     
     #Ouput une ValueBox avec le nombre total de candidats masculin de l'académie
     output$candidat_tot_m <- renderValueBox({
-     valueBox(academie()$candidats, "Candidats total masculin", icon = icon("list"), color = "red")
+     valueBox(academie()$candidats, "Candidats total masculin", icon = icon("mars"), color = "light-blue")
     })
     
     #Ouput une ValueBox avec le nombre total de place tout établissement confondu de l'académie
@@ -94,7 +134,7 @@ shinyServer(function(input, output) {
     
     #Ouput une ValueBox avec le nom de l'établissement
     output$etabli <- renderText({
-      etab <- fr_esr_parcoursup %>%
+      etab <- dataset() %>%
         group_by(g_ea_lib_vx) %>%
         filter(g_ea_lib_vx == input$etab) %>%
         summarise()
@@ -103,15 +143,65 @@ shinyServer(function(input, output) {
     })
     
     #Ouput avec les type de formation disponible dans l'établissement
-    output$type_forma <- renderText({
-      list_form <- fr_esr_parcoursup %>% 
-        filter(g_ea_lib_vx == input$etab) %>%
-        select(fili) %>%
-        group_by(fili) %>%
-        summarise()
+    output$type_forma <- renderUI({
+      if(input$annee == 2020) {
+        list_form <- dataset() %>% 
+          filter(g_ea_lib_vx == input$etab) %>%
+          select(lib_comp_voe_ins) %>%
+          group_by(lib_comp_voe_ins)
+        list_form <- unique(list_form$lib_comp_voe_ins)
+      } else {
+        list_form <- dataset() %>% 
+          filter(g_ea_lib_vx == input$etab) %>%
+          select(lib_for_voe_ins) %>%
+          group_by(lib_for_voe_ins)
+        list_form <- unique(list_form$lib_for_voe_ins)
+      }
       
-      paste(list_form$fili)
+      selectInput("formation", "Choisir une formation", choices = list_form)
     })
+    
+    forma <- reactive({
+      if(input$annee == 2020) {
+        dataset() %>%
+          filter(g_ea_lib_vx == input$etab, acad_mies == input$acad, lib_comp_voe_ins == input$formation) %>%
+          group_by(lib_comp_voe_ins) %>%
+          summarize(canditat_tot = sum(voe_tot),
+                    candidates = sum(voe_tot_f),
+                    candidats = sum(voe_tot) - sum(voe_tot_f),
+                    place_tot = sum(capa_fin))
+      } else {
+        dataset() %>%
+          filter(g_ea_lib_vx == input$etab, acad_mies == input$acad, lib_for_voe_ins == input$formation) %>%
+          group_by(lib_for_voe_ins) %>%
+          summarize(canditat_tot = sum(voe_tot),
+                    candidates = sum(voe_tot_f),
+                    candidats = sum(voe_tot) - sum(voe_tot_f),
+                    place_tot = sum(capa_fin))
+      }
+
+    })
+    
+    #Ouput une ValueBox avec le nombre total de candidats de la formation
+    output$candidat_tot_forma <- renderValueBox({
+      valueBox(forma()$canditat_tot, "Candidats total", icon = icon("list"), color = "yellow")
+    })
+    
+    #Ouput une ValueBox avec le nombre total de candidats féminin de la formation
+    output$candidat_tot_f_forma <- renderValueBox({
+      valueBox(forma()$candidates, "Candidats total fémnin", icon = icon("venus"), color = "fuchsia")
+    })
+    
+    #Ouput une ValueBox avec le nombre total de candidats masculin de la formation
+    output$candidat_tot_m_forma <- renderValueBox({
+      valueBox(forma()$candidats, "Candidats total masculin", icon = icon("mars"), color = "light-blue")
+    })
+    
+    #Ouput une ValueBox avec le nombre total de place tout établissement confondu de la formation
+    output$place_tot_forma <- renderValueBox({
+      valueBox(forma()$place_tot, "Place total", icon = icon("list"), color = "red")
+    })
+    
   
   # Onglet 3 : Carte Formation
   
@@ -135,13 +225,7 @@ shinyServer(function(input, output) {
     })
     
   data_graph <- reactive({
-    if (input$annee == 2022) {
-      data_graph <- subset(fr_esr_parcoursup, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
-    } else if (input$annee == 2021) {
-      data_graph <- subset(fr_esr_parcoursup_2021, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
-    } else {
-      data_graph <- subset(fr_esr_parcoursup_2020, select = c("dep_lib","fili", "g_olocalisation_des_formations"))
-    } 
+    data_graph <- subset(dataset(), select = c("dep_lib","fili", "g_olocalisation_des_formations"))
     data_graph <- data_graph %>% separate(g_olocalisation_des_formations, c("lat","long"), sep=",") %>% transform(long = as.numeric(long), lat = as.numeric(lat)) %>%  filter(lat > 41.6, lat < 51.5, fili %in% input$fili)
     data_graph <- data_graph %>% group_by(lat,long,fili) %>% mutate(quantite=n())
     data_graph
@@ -183,14 +267,7 @@ shinyServer(function(input, output) {
   })
   
   data_tauxParAcademie <- reactive({
-    if (input$annee == 2022) {
-      tauxParAcademie <- fr_esr_parcoursup 
-    } else if (input$annee == 2021) {
-      tauxParAcademie <- fr_esr_parcoursup_2021
-    } else {
-      tauxParAcademie <- fr_esr_parcoursup_2020
-    } 
-    tauxParAcademie <-  tauxParAcademie %>%
+    tauxParAcademie <-  dataset() %>%
       group_by(acad_mies) %>%
       subset(voe_tot != 0) %>%
       summarize(tauxParAcademie = mean(prop_tot/voe_tot)) %>%

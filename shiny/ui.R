@@ -19,14 +19,13 @@ dashboardPage(
   ),
   dashboardBody(
     tabItems(
-      
       tabItem(tabName = "gene",
-        infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
-        infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
-        infoBox("New Orders", 10 * 2, icon = icon("credit-card")),
+        h2("Informations sur le dataset"),
+        infoBoxOutput("nb_établissement"),
+        infoBoxOutput("nb_formation")
       ),
       tabItem(tabName = "acad",
-        h2("Informations"),
+        h2("Informations selon l'académie et l'établissement"),
         
         fluidRow(
           box(
@@ -49,9 +48,21 @@ dashboardPage(
           title = "Formation", solidHeader = TRUE, status = "warning",
           width = 12, collapsible = TRUE, collapsed = TRUE,
           h3(textOutput("etabli"), style = "text-align:center;"),
-          box(title = "Formation dans l'établissement", status = "info", solidHeader = TRUE, p(textOutput("type_forma")))
+          fluidRow (
+            column(width = 6, offset = 3,
+              box(
+                width = 12,
+                uiOutput("type_forma")
+              )
+            )
+          ),
+          fluidRow (
+            valueBoxOutput("candidat_tot_forma"),
+            valueBoxOutput("candidat_tot_f_forma"),
+            valueBoxOutput("candidat_tot_m_forma"),
+            valueBoxOutput("place_tot_forma")
+          )
         )
-        
       ),
       
       tabItem(tabName = "stats",
