@@ -340,8 +340,8 @@ shinyServer(function(input, output) {
                                 values = c("proposition_total" = "#66c2a5",
                                            "masculin" = "#8da0cb",
                                            "féminin" = "#e78ac3"),
-                                labels = c("Masculin ayant accepté",
-                                           "Féminin ayant accepté",
+                                labels = c("Féminin ayant accepté",
+                                           "Masculin ayant accepté",
                                            "Ayant reçu une proposition")) +  
               labs(x = "\n Ville", y = "Nombre\n")
     
